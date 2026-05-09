@@ -79,8 +79,11 @@ interface WebhookData {
 }
 
 export async function handleWebhookEvent(event: string, data: WebhookData): Promise<void> {
+  console.log("[webhook] event:", event, "data:", JSON.stringify(data));
+
   if (event === "charge.success") {
     const projectId = data.metadata?.projectId;
+    console.log("[webhook] charge.success projectId:", projectId, "reference:", data.reference);
     if (!projectId || !data.reference) return;
     const v = await verifyTransaction(data.reference);
     if (!v.status) return;
@@ -94,20 +97,32 @@ export async function handleWebhookEvent(event: string, data: WebhookData): Prom
         updatedAt: new Date(),
       })
       .where(eq(projects.id, projectId));
+    console.log("[webhook] project upgraded to pro:", projectId);
+
+  } else if (event === "subscription.create") {
+    const subCode = data.subscription_code;
+    const custCode = data.customer?.customer_code;
+    console.log("[webhook] subscription.create subCode:", subCode, "custCode:", custCode);
+    if (!subCode || !custCode) return;
+    await db
+      .update(projects)
+      .set({
+        planType: "pro",
+        active: true,
+        paystackSubscriptionCode: subCode,
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.paystackCustomerCode, custCode));
+    console.log("[webhook] subscription created, project upgraded to pro");
+
   } else if (event === "subscription.disable") {
     const sub = data.subscription_code;
+    console.log("[webhook] subscription.disable sub:", sub);
     if (!sub) return;
     await db
       .update(projects)
       .set({ planType: "free", updatedAt: new Date() })
       .where(eq(projects.paystackSubscriptionCode, sub));
-  } else if (event === "subscription.create") {
-    const subCode = data.subscription_code;
-    const custCode = data.customer?.customer_code;
-    if (!subCode || !custCode) return;
-    await db
-      .update(projects)
-      .set({ paystackSubscriptionCode: subCode, updatedAt: new Date() })
-      .where(eq(projects.paystackCustomerCode, custCode));
+    console.log("[webhook] subscription disabled, project downgraded to free");
   }
 }
