@@ -2,7 +2,7 @@ import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import api from "./api/index";
+import api from "./api/index.js";
 
 const app = new Hono();
 
