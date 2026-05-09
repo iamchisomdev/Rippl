@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Rippl — Test Console</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg:#08090C;--surface:#0F1117;--raised:#161B24;
+    --border:#1E2535;--borderB:#252F42;
+    --text:#E8EDF5;--muted:#5A6478;
+    --accent:#00C27C;--red:#FF4D6A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 24px}
+  .head{display:flex;justify-content:space-between;align-items:center;
+    padding-bottom:18px;border-bottom:1px solid var(--border)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{display:block}
+  .brand .nm{font-weight:700;font-size:15px}
+  .brand .sub{color:var(--muted);font-size:12px}
+  .status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .status .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+  .status.ok .dot{background:var(--accent)}
+  .status.bad .dot{background:var(--red)}
+  .steps{margin:24px 0;display:flex;flex-direction:column;gap:10px}
+  .step{display:flex;gap:14px;align-items:flex-start}
+  .step .n{width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--bg);
+    font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none}
+  .step .ttl{font-size:13px;font-weight:600}
+  .step .desc{font-size:12px;color:var(--muted);margin-top:2px}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-top:16px;overflow:hidden}
+  .panel .ph{padding:12px 16px;border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center}
+  .panel .ph .t{font-size:13px;font-weight:700}
+  .panel .ph .b{font-size:10px;font-family:'SF Mono',ui-monospace,monospace;color:var(--muted);
+    background:var(--raised);border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+  .pb{padding:16px;display:flex;flex-direction:column;gap:10px}
+  label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+  input,textarea{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:7px;
+    padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none}
+  textarea{font-family:'SF Mono',ui-monospace,monospace;font-size:11px;resize:vertical;min-height:80px}
+  button.go{background:var(--accent);color:var(--bg);border:none;padding:9px 14px;border-radius:7px;
+    font-weight:700;font-size:12px;cursor:pointer;align-self:flex-start}
+  button.ghost{background:var(--raised);color:var(--muted);border:1px solid var(--border);padding:8px 12px;border-radius:7px;font-weight:700;font-size:12px;cursor:pointer}
+  .res{margin-top:6px;padding:10px 12px;border-radius:7px;
+    font-family:'SF Mono',ui-monospace,monospace;font-size:11px;line-height:1.8;
+    white-space:pre-wrap;word-break:break-all;display:none}
+  .res.ok{display:block;border-left:3px solid var(--accent);background:rgba(0,194,124,0.07);color:var(--text)}
+  .res.bad{display:block;border-left:3px solid var(--red);background:rgba(255,77,106,0.06);color:var(--red)}
+  .log{height:200px;overflow:auto;background:#060709;border:1px solid var(--border);
+    border-radius:9px;padding:12px;font-family:'SF Mono',ui-monospace,monospace;font-size:11px;line-height:1.7}
+  .log .l{display:flex;gap:8px;color:var(--muted)}
+  .log .l .t{color:var(--borderB)}
+  .preview{background:var(--raised);border:1px solid var(--border);border-radius:12px;padding:24px;margin-top:12px;
+    display:flex;gap:14px;flex-wrap:wrap}
+  .preview > div{flex:1;min-width:240px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" rx="7" fill="#00C27C"/><path d="M6 16 Q 9 8 18 7" stroke="#08090C" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="18" cy="7" r="1.6" fill="#08090C"/></svg>
+      <span class="nm">Rippl</span>
+      <span class="sub">Test Console</span>
+    </div>
+    <div id="status" class="status"><span class="dot"></span><span id="statusTxt">Checking…</span></div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><div class="ttl">Create a project</div><div class="desc">Use any test email + name. Copy the project ID.</div></div></div>
+    <div class="step"><div class="n">2</div><div><div class="ttl">Activate locally</div><div class="desc">Open Neon SQL editor → <code>UPDATE projects SET active=true WHERE id='…';</code></div></div></div>
+    <div class="step"><div class="n">3</div><div><div class="ttl">Identify a user</div><div class="desc">Generates the referral code. Paste it into the convert call.</div></div></div>
+    <div class="step"><div class="n">4</div><div><div class="ttl">Convert + check balance</div><div class="desc">Identify a second user, then track <code>referral.convert</code>.</div></div></div>
+    <div class="step"><div class="n">5</div><div><div class="ttl">Embed widgets</div><div class="desc">Paste the embed code, click Load Widgets to preview.</div></div></div>
+  </div>
+
+  <!-- create project -->
+  <div class="panel">
+    <div class="ph"><div class="t">Create project</div><div class="b">POST /api/projects/create</div></div>
+    <div class="pb">
+      <div><label>Email</label><input id="cpEmail" placeholder="you@example.com"/></div>
+      <div><label>Project name</label><input id="cpName" placeholder="My Test Site"/></div>
+      <button class="go" onclick="createProject()">Create project</button>
+      <div id="cpRes" class="res"></div>
+    </div>
+  </div>
+
+  <!-- identify -->
+  <div class="panel">
+    <div class="ph"><div class="t">Identify user</div><div class="b">POST /api/identify</div></div>
+    <div class="pb">
+      <div><label>Project ID</label><input class="pid" placeholder="auto-filled"/></div>
+      <div><label>User ID</label><input id="idUser" value="user_001"/></div>
+      <div><label>Email (optional)</label><input id="idEmail" placeholder="user@test.com"/></div>
+      <button class="go" onclick="identify()">Identify</button>
+      <div id="idRes" class="res"></div>
+    </div>
+  </div>
+
+  <!-- track convert -->
+  <div class="panel">
+    <div class="ph"><div class="t">Track conversion</div><div class="b">POST /api/track</div></div>
+    <div class="pb">
+      <div><label>Project ID</label><input class="pid"/></div>
+      <div><label>User ID (referee)</label><input id="trkUser" value="user_002"/></div>
+      <div><label>Referral code</label><input id="trkCode" placeholder="ABCD1234"/></div>
+      <button class="go" onclick="trackConvert()">Convert</button>
+      <div id="trkRes" class="res"></div>
+    </div>
+  </div>
+
+  <!-- balance + stats -->
+  <div class="panel">
+    <div class="ph"><div class="t">Balance & stats</div><div class="b">GET /api/balance · /stats</div></div>
+    <div class="pb">
+      <div><label>Project ID</label><input class="pid"/></div>
+      <div><label>User ID</label><input id="balUser" value="user_001"/></div>
+      <div style="display:flex;gap:8px">
+        <button class="go" onclick="getBalance()">Get balance</button>
+        <button class="ghost" onclick="getStats()">Get stats</button>
+        <button class="ghost" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div id="balRes" class="res"></div>
+    </div>
+  </div>
+
+  <!-- widget preview -->
+  <div class="panel">
+    <div class="ph"><div class="t">Widget preview</div><div class="b">embed → /v1.js</div></div>
+    <div class="pb">
+      <div><label>Embed code</label><textarea id="embedCode"></textarea></div>
+      <button class="go" onclick="loadWidgets()">Load widgets</button>
+      <div class="preview">
+        <div data-rippl-widget="referral-card"></div>
+        <div data-rippl-widget="rewards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- log -->
+  <div class="panel">
+    <div class="ph"><div class="t">Activity</div><div class="b">log</div></div>
+    <div class="pb"><div id="log" class="log"></div></div>
+  </div>
+</div>
+
+<script>
+const BASE = location.origin;
+function $(s){return document.querySelector(s)}
+function $$(s){return Array.from(document.querySelectorAll(s))}
+function log(dir, msg){
+  const el = $('#log');
+  const t = new Date().toLocaleTimeString();
+  const d = document.createElement('div'); d.className='l';
+  d.innerHTML = `<span class="t">${t}</span><span>${dir}</span><span>${msg}</span>`;
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
+}
+function show(id, ok, data){
+  const el = $('#'+id);
+  el.className = 'res ' + (ok?'ok':'bad');
+  el.textContent = typeof data==='string'?data:JSON.stringify(data,null,2);
+}
+function fillPid(id){ $$('.pid').forEach(i=>i.value=id) }
+
+fetch(BASE+'/health').then(r=>r.json()).then(j=>{
+  $('#status').className='status ok'; $('#statusTxt').textContent='Online';
+  log('←','health '+JSON.stringify(j));
+}).catch(()=>{ $('#status').className='status bad'; $('#statusTxt').textContent='Offline'; });
+
+async function createProject(){
+  const body = { email:$('#cpEmail').value, name:$('#cpName').value };
+  log('→','POST /api/projects/create');
+  const r = await fetch(BASE+'/api/projects/create',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  const j = await r.json();
+  show('cpRes', r.ok, j);
+  if (r.ok){
+    fillPid(j.projectId);
+    $('#embedCode').value = `<script src="${BASE}/v1.js" data-project="${j.projectId}" data-user-id="preview_user"><\/script>`;
+    log('←','project '+j.projectId.slice(0,8)+'…');
+  }
+}
+async function identify(){
+  const pid = $$('.pid')[0].value;
+  log('→','POST /api/identify');
+  const r = await fetch(BASE+'/api/identify',{method:'POST',headers:{'content-type':'application/json','x-project-id':pid},body:JSON.stringify({userId:$('#idUser').value, email:$('#idEmail').value||undefined})});
+  const j = await r.json();
+  show('idRes', r.ok, j);
+  if (r.ok){ $('#trkCode').value = j.referral.code; log('←','code '+j.referral.code); }
+}
+async function trackConvert(){
+  const pid = $$('.pid')[0].value;
+  log('→','POST /api/track convert');
+  const r = await fetch(BASE+'/api/track',{method:'POST',headers:{'content-type':'application/json','x-project-id':pid},body:JSON.stringify({event:'referral.convert',userId:$('#trkUser').value,payload:{code:$('#trkCode').value}})});
+  show('trkRes', r.ok, await r.json());
+}
+async function getBalance(){
+  const pid = $$('.pid')[0].value;
+  log('→','GET /api/balance');
+  const r = await fetch(BASE+'/api/balance/'+encodeURIComponent($('#balUser').value),{headers:{'x-project-id':pid}});
+  show('balRes', r.ok, await r.json());
+}
+async function getStats(){
+  const pid = $$('.pid')[0].value;
+  log('→','GET /stats');
+  const r = await fetch(BASE+'/api/projects/'+pid+'/stats');
+  show('balRes', r.ok, await r.json());
+}
+async function exportCSV(){
+  const pid = $$('.pid')[0].value;
+  log('→','GET /api/export/referrals');
+  const r = await fetch(BASE+'/api/export/referrals',{headers:{'x-project-id':pid}});
+  if (!r.ok){ show('balRes',false, await r.json()); return; }
+  const blob = await r.blob(); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='referrals.csv'; a.click();
+}
+function loadWidgets(){
+  const html = $('#embedCode').value;
+  const m = html.match(/src="([^"]+)"[^>]*data-project="([^"]+)"[^>]*data-user-id="([^"]*)"/);
+  if (!m) { log('!','invalid embed code'); return; }
+  const s = document.createElement('script');
+  s.src = m[1]; s.setAttribute('data-project',m[2]); s.setAttribute('data-user-id',m[3]||'preview_user');
+  document.body.appendChild(s);
+  log('→','loaded /v1.js');
+}
+</script>
+</body>
+</html>
