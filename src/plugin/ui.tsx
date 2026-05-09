@@ -20,7 +20,7 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const MONO = '"SF Mono", "Fira Code", ui-monospace, monospace';
 
 const API_BASE =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+  (typeof process !== "undefined" && (process.env as Record<string, string>).VITE_API_URL) ||
   "http://localhost:3001";
 const STORAGE_KEY = "rippl_project_id";
 
